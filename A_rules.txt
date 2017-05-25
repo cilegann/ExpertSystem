@@ -1,0 +1,131 @@
+﻿RULE mammal_1
+IF has_hair = T
+THEN is_mammal = T
+　　
+RULE mammal_2
+IF make_milk = T
+THEN is_mammal = T
+
+RULE carnivore_1
+IF eat_meat = T
+THEN is_carnivore = T
+　　
+RULE carnivore_2
+IF pointed_teeth = T & has_claws = T & forward_eyes = T
+THEN is_carnivore = T
+　　
+RULE cheetah_1
+IF is_mammal = T & is_carnivore = T & color = A & texture = B
+THEN is_cheetah = T
+SUGGESTION 
+[ The animal is a cheetah 豹. ]
+　　
+RULE tiger_1
+IF is_mammal = T & is_carnivore = T & color = A & texture = A
+THEN is_tiger = T
+SUGGESTION 
+[ The animal is a tiger 虎. ]
+
+RULE ungulate_1
+IF is_mammal = T & has_hoofs = T
+THEN is_ungulate = T
+
+RULE ungulate_2
+IF is_mammal = T & chew_cud = T
+THEN is_ungulate = T
+
+RULE giraffe_1
+IF is_ungulate = T & has_long_neck = T & has_long_legs = T & texture = B
+THEN is_giraffe = T
+SUGGESTION 
+[ The animal is a giraffe 長頸鹿. ]
+
+RULE zebra_1
+IF is_ungulate = T & texture = A
+THEN is_zebra = T
+SUGGESTION 
+[ The animal is a zebra 斑馬. ]
+
+RULE bird_1
+IF has_feathers = T
+THEN is_bird = T
+
+RULE bird_2
+IF can_fly = T & lay_eggs = T
+THEN is_bird = T
+
+RULE ostrich_1
+IF is_bird = T & can_fly = F & has_long_neck = T & has_long_legs = T & color = B
+THEN is_ostrich = T
+SUGGESTION 
+[ The animal is a ostrich 駝鳥. ]
+
+RULE penguin_1
+IF is_bird = T & can_fly = F & can_swim = T & color = B
+THEN is_penguin = T
+SUGGESTION 
+[ The animal is a penguin 企鵝. ]
+
+RULE albatross_1
+IF is_bird = T & can_fly_well = T
+THEN is_albatross = T
+SUGGESTION 
+[ The animal is an albatross 信天翁. ]
+　　
+　　
+PROMPT has_hoofs 
+[ Does the animal has hoofs 有蹄? T. true, F. false, 0. unknown ]
+
+PROMPT chew_cud 
+[ Does the animal chew cud 反芻? T. true, F. false, 0. unknown ]
+
+PROMPT lay_eggs 
+[ Does the animal lay eggs 生蛋? T. true, F. false, 0. unknown ]
+
+PROMPT has_feathers 
+[ Does the animal has feathers 有羽毛? T. true, F. false, 0. unknown ]
+
+PROMPT has_long_neck 
+[ Does the animal has long neck 長脖子? T. true, F. false, 0. unknown ]
+
+PROMPT has_long_legs 
+[ Does the animal has long legs 長腿? T. true, F. false, 0. unknown ]
+
+PROMPT can_swim 
+[ Can the animal swim 會游泳? T. true, F. false, 0. unknown ]
+
+PROMPT can_fly 
+[ Can the animal fly 會飛? T. true, F. false, 0. unknown ]
+
+PROMPT can_fly_well 
+[ Does the animal fly well 善飛? T. true, F. false, 0. unknown ]
+
+PROMPT has_hair 
+[ Does the animal has hair 有毛髮? T. true, F. false, 0. unknown ]
+
+PROMPT make_milk 
+[ Does the animal make milk 產奶? T. true, F. false, 0. unknown ]
+
+PROMPT eat_meat 
+[ Does the animal eat meat 吃肉? T. true, F. false, 0. unknown ]
+
+PROMPT pointed_teeth 
+[ Are the teeth of animal pointed 牙齒犀利? T. true, F. false, 0. unknown ]
+
+PROMPT has_claws 
+[ Does the animal has claws 有爪? T. true, F. false, 0. unknown ]
+
+PROMPT forward_eyes 
+[ Are the eyes of animal forward 眼向前方? T. true, F. false, 0. unknown ]
+
+PROMPT color 
+[ What is the color of animal? A. tawny, B. black-and-white, 0. unknown ]
+
+PROMPT texture 
+[ What is the texture of animal? A. black_stripes, B. dark_sports, 0. unknown ]
+
+
+
+
+
+
