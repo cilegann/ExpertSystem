@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -47,20 +48,20 @@ struct facts{
 vector<tree> treeVec;
 vector<facts> factVec;
 
-void treeAdder(vector<tree>& treeVec,string ruleName,string conditon,string conclution,string sug){
+void treeAdder(string ruleName,string conditon,string conclution,string sug){
     //treeAdder with sug
 }
 
-void treeAdder(vector<tree>& treeVec,string ruleName,string conditon,string conclution){
+void treeAdder(string ruleName,string conditon,string conclution){
     //treeAdder without sug
 }
 
-void factAdder(vector<facts>& factVec,string statement){
+void factAdder(string statement){
     
 }
 
 //openRule
-void openrule(string filepath,vector<tree>& treeVec,vector<facts>& factVec){
+void openrule(string filepath){
     char* filepathChar=&filepath[0u];
     int totalLine=countlines(filepathChar);
     //找rule所在行（全部，並記錄全部所在行）
@@ -75,9 +76,9 @@ void openrule(string filepath,vector<tree>& treeVec,vector<facts>& factVec){
             string tmp=readline(filepathChar, ++ruleLine);
             if(tmp[0]=='S'){
                 sug=readline(filepathChar, ++ruleLine);
-                treeAdder(treeVec, ruleName, condition, conclusion,sug);
+                treeAdder( ruleName, condition, conclusion,sug);
             }else{
-                treeAdder(treeVec, ruleName, condition, conclusion);
+                treeAdder( ruleName, condition, conclusion);
             }
             
         }
@@ -103,7 +104,7 @@ int main(){
         if(command=="OPENRULE"){
             cin>>parameter;
         //呼叫openrule function
-            openrule(parameter, treeVec, factVec);
+            openrule(parameter);
         }else if(command=="LISTRULE"){
         //呼叫列印規則函式
         }else if(command=="ADDRULE"){
