@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 using namespace std;
 
@@ -11,89 +12,128 @@ int countlines(char*);
 string readline(char*,int);
 
 
-//狀態結構，包含描述與TF
-struct statement{
-    string discription;
-    bool state;
+
+
+//事實結構
+struct fact{
+    string conclusion;
+    string state;
+    string prompt;
+    fact();
+    fact(string conclusion){
+        this->conclusion=conclusion;
+        this->state="N";
+    }
+    
 };
 
-//邏輯小結構，包含描述(discreption)、編號(num)、sug(suggestion)、OR vector<AND vector<狀態結構>>
+struct statement{
+    string conclusion;
+    string souldBeState;
+    bool ifStateEqual;
+    statement();
+    statement(string conclu,string souldbe){
+        this->conclusion=conclu;
+        this->souldBeState=souldbe;
+        this->ifStateEqual=0;
+    }
+};
+//邏輯小結構，包含描述(rule name)、sug(suggestion)、cOR vector<AND vector<狀態結構>>
 class tree{
-private:
-    int num;
+public:
     string name;
     string suggestion;
     string conclusion;
-    vector<vector<vector<statement > > > OR;
-public:
+    vector<vector<statement* > >  OR;
     tree();
-    tree(int,string,string);
+    tree(string name,string conclusion){
+        this->name=name;
+        this->conclusion=conclusion;
+    }
+    
+    tree(string name,string conclusion,string suggestion){
+        this->name=name;
+        this->conclusion=conclusion;
+        this->suggestion=suggestion;
+    }
     void printSug(){
         cout<<"BOT>"<<suggestion;
     }
 };
 
-//事實結構
-struct facts{
-    char type;
-    statement stats;
-    facts(char t,string n,bool s){
-        type=t;
-        stats.discription=n;
-        stats.state=s;
+
+
+set<tree*> treeSet;
+set<fact*> factSet;
+set<statement*> statementSet;
+void treeAdder(string ruleName,string conclution,string suggestion,string ifUncut){
+    tree* t=new tree(ruleName,conclution,suggestion);
+    vector<statement*> andVec;
+    int numOfCondition=1;
+    for(int i=0;i<ifUncut.length();i++){
+        if(ifUncut[i]=='&'){
+            numOfCondition++;
+        }
     }
-    string prompt;
-};
-
-vector<tree> treeVec;
-vector<facts> factVec;
-
-void treeAdder(string ruleName,string conditon,string conclution,string sug){
-    //treeAdder with sug
-}
-
-void treeAdder(string ruleName,string conditon,string conclution){
-    //treeAdder without sug
-}
-
-void factAdder(string statement){
+    string conditionUncut;
+    string condition;
+    string shouldBecondition;
+    if(numOfCondition==1){
+        
+    }else{
+        
+    }
+    statement* state=new statement();
     
+    
+}
+
+
+
+void factAdder(string conclu){
+    fact* f=new fact(conclu);
+    factSet.insert(f);
 }
 
 //openRule
 void openrule(string filepath){
     char* filepathChar=&filepath[0u];
     int totalLine=countlines(filepathChar);
-    //找rule所在行（全部，並記錄全部所在行）
     for(int i=0;i<totalLine;i++){
         string str=readline(filepathChar, i);
         if(str[0]=='R'){
-            int ruleLine=i;
-            string ruleName=str;
-            string condition=readline(filepathChar,++ruleLine);
-            string conclusion=readline(filepathChar,++ruleLine);
-            string sug;
-            string tmp=readline(filepathChar, ++ruleLine);
-            if(tmp[0]=='S'){
-                sug=readline(filepathChar, ++ruleLine);
-                treeAdder( ruleName, condition, conclusion,sug);
+            int rulenameLine=i;
+            int spaceIndex=(int)str.find('_');
+            string ruleName=str.substr(5,spaceIndex-5);
+            string ifStringUncut=readline(filepathChar,++rulenameLine);
+            string concluStringUncut=readline(filepathChar,++rulenameLine);
+            string suggestion;
+            if(readline(filepathChar, ++rulenameLine)[0]=='S'){
+                suggestion=readline(filepathChar,++rulenameLine);
             }else{
-                treeAdder( ruleName, condition, conclusion);
+                suggestion="X";
             }
+            int equalIndex=(int)concluStringUncut.find('=');
+            string conclusion=concluStringUncut.substr(5,equalIndex-6);
+            string shouldBestateString=concluStringUncut.substr(equalIndex+2,1);
+            bool shouldBestate;
+            if(shouldBestateString=="T"){
+                shouldBestate=1;
+            }else{
+                shouldBestate=0;
+            }
+            factAdder(conclusion);
+            treeAdder(ruleName, conclusion, suggestion,ifStringUncut);
             
         }
-        
-        
     }
-    //依據個數跑迴圈
-    //treevec 新增一個元素
-    //factvec 新增一個元素
     
 }
 
 
 int main(){
-
+    openrule("/Users/sean/Desktop/dp/A_rules.txt");
+    /*
     string command,parameter;
     
     cout<<"OPENRULE/LISTRULE/ADDRULE/OPENCLAUSE/LISTCLAUSE/ADDCLAUSE/DEBUG/QUIT : ";
@@ -124,6 +164,7 @@ int main(){
         cout<<"OPENRULE/LISTRULE/ADDRULE/OPENFACT/LISTCLAUSE/ADDCLAUSE/DEBUG/QUIT";
         cin>>command;
     }
+     */
     return 0;
 }
 
