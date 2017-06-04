@@ -12,10 +12,12 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <cctype>
+#include <algorithm>
 
 using namespace std;
 
-//函數宣告
+//函數 全域變數 宣告
 int countlines(char*);
 string readline(char*,int);
 string& trim(string& str);
@@ -27,10 +29,16 @@ class tree;
 vector<tree> treeVec;
 vector<fact> factVec;
 vector<statement> statementVec;
+bool debug=0,record=0;
 
 //HELP- BOT SAY
 void botSay(string tosay){
     cout<<"BOT> "<<tosay<<endl;
+}
+
+//HELP- DEBUG SAY
+void debugSay(string tosay){
+    cout<<"DEBUG> "<<tosay<<endl;
 }
 
 //STRUCT- 事實結構
@@ -279,11 +287,13 @@ void listrule(){
 void addrule(){
     string todo;
     string in;
+    cout<<">";
     while(cin){
         getline(cin,in);
         if(in=="@")
             break;
         todo.append(in);
+        cout<<">";
     }
     int nameStartIndex=-1;
     int nameEndIndex=-1;
@@ -431,27 +441,66 @@ void openclause(string filepath){
     ts.append(" clauses read\n");
 }
 
+void inf(){
+    
+}
+
 int main(){
     string rulepath="/Users/sean/Desktop/dp/A_rules.txt";
     string cmdU,cmd,arg="";
     int spaceIdx;
+    cout<<"> ";
     while(cin){
         getline(cin, cmdU);
         try {
             if(cmdU.find(' ')!=string::npos){
                 spaceIdx=(int)cmdU.find(' ');
-                if(cmdU.find_last_of(' ')!=spaceIdx)
-                    throw "COMMAND FORMAT ERROR";
+                if(cmdU.find_last_of(' ')!=spaceIdx){
+                    string e="COMMAND FORMAT ERROR";
+                    throw e;
+                }
                 cmd=cmdU.substr(0,spaceIdx);
                 arg=cmdU.substr(spaceIdx+1,cmdU.length()-spaceIdx-1);
             }else{
                 cmd=cmdU;
             }
-            cmd=cmd;
-            
+            transform(cmd.begin(), cmd.end(), cmd.begin(), (int(*)(int))tolower);
+            cmd=trim(cmd);
+            arg=trim(arg);
+            if(cmd=="openrule"){
+                openrule(arg);
+            }else if(cmd=="listrule"){
+                listrule();
+            }else if(cmd=="addrule"){
+                addrule();
+            }else if(cmd=="addclause"){
+                addclause(arg);
+            }else if(cmd=="openclause"){
+                addclause(arg);
+            }else if(cmd=="listclause"){
+                listclause();
+            }else if(cmd=="inference"){
+                inf();
+            }else if(cmd=="debugon"){
+                debug=1;
+            }else if(cmd=="debugoff"){
+                debug=0;
+            }else if(cmd=="recordon"){
+                record=1;
+            }else if(cmd=="recordoff"){
+                record=0;
+            }else if(cmd=="quit"){
+                botSay("GoodBye!");
+                break;
+            }else{
+                string a="CMD ERROR";
+                throw a;
+            }
         } catch (string e) {
+            e.append(".\nCMDs: OPENRULE [arg]/LISTRULE/ADDRULE/ADDCLAUSE [arg]/OPENCLAUSE/LISTCLAUSE/INFERENCE/DEBUGON/DEBUGOFF/RECORDON/RECORDOFF/QUIT\n");
             botSay(e);
         }
+        cout<<"> ";
     }
     return 0;
 }
