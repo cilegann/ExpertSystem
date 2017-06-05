@@ -1,4 +1,5 @@
-﻿RULE mammal_1
+﻿
+RULE mammal_1
 IF has_hair = T
 THEN is_mammal = T
 　　

@@ -87,6 +87,7 @@ struct statement{
     string condition;
     string shouldBeState;
     bool ifStateEqual;
+    int score;
     statement(){}
     statement(string cond,string shouldbe){
         this->condition=cond;
@@ -145,6 +146,10 @@ public:
     
     void printSug(){
         botSay(suggestion);
+    }
+    
+    void writelog(){
+        
     }
     
 };
@@ -387,40 +392,43 @@ void listclause(){
         tosay.append(factVec[i].state);
         botSay(tosay);
     }
+    cout<<endl;
 }
 
 //MAIN- ADDCLAUSE
 bool addclause(string in){
-    string ruleName,statement;
-    int equalIndex;
+    string ruleName,statement,tosay;
+    int equalIndex=0,chk=0;
     try{
         equalIndex=(int)in.find('=');
+        if(!equalIndex)
+            throw new exception;
+        tosay="The clause [";
+        ruleName=in.substr(0,equalIndex);
+        statement=in.substr(equalIndex+1,in.size()-equalIndex);
+        ruleName=trim(ruleName);
+        statement=trim(statement);
+        for(int factIndex=0;factIndex<factVec.size();factIndex++){
+            if(factVec[factIndex].conclusion==ruleName){
+                chk=1;
+                tosay.append(ruleName);
+                tosay.append("] has changed from ");
+                tosay.append(factVec[factIndex].state);
+                tosay.append(" to ");
+                tosay.append(statement);
+                factVec[factIndex].state=statement;
+                chk=1;
+            }
+        }
+        if(!chk){
+            tosay.append(ruleName);
+            tosay.append("] NOT FOUND");
+        }
     }catch(exception e){
         botSay("ERROR(FORMAT ERROR)");
         return 0;
     }
-    ruleName=in.substr(0,equalIndex);
-    statement=in.substr(equalIndex+1,in.size()-equalIndex);
-    ruleName=trim(ruleName);
-    statement=trim(statement);
-    bool chk=0;
-    string tosay="The clause [";
-    for(int factIndex=0;factIndex<factVec.size();factIndex++){
-        if(factVec[factIndex].conclusion==ruleName){
-            chk=1;
-            tosay.append(ruleName);
-            tosay.append("] has changed from ");
-            tosay.append(factVec[factIndex].state);
-            tosay.append(" to ");
-            tosay.append(statement);
-            factVec[factIndex].state=statement;
-            chk=1;
-        }
-    }
-    if(!chk){
-        tosay.append(ruleName);
-        tosay.append("] NOT FOUND");
-    }
+
     botSay(tosay);
     return chk;
 }
@@ -441,6 +449,14 @@ void openclause(string filepath){
     ts.append(" clauses read\n");
 }
 
+//HELPER- scoreUpdate
+void scoreUpdate(){
+    
+}
+
+//HELPER- read log to assign initial score
+
+//MAIN- INFERENCE
 void inf(){
     
 }
@@ -452,6 +468,8 @@ int main(){
     cout<<"> ";
     while(cin){
         getline(cin, cmdU);
+        cmd="";
+        arg="";
         try {
             if(cmdU.find(' ')!=string::npos){
                 spaceIdx=(int)cmdU.find(' ');
