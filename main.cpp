@@ -14,10 +14,14 @@
 #include <unordered_set>
 #include <cctype>
 #include <algorithm>
+#include <stdio.h>
+#include <time.h>
+#include <iomanip>
+
 
 using namespace std;
 
-//函數 全域變數 宣告
+//函數 全域變數 宣告[v]
 int countlines(char*);
 string readline(char*,int);
 string& trim(string& str);
@@ -28,20 +32,63 @@ struct statement;
 class tree;
 vector<tree> treeVec;
 vector<fact> factVec;
+vector<tree> finalTV;
+vector<tree> ordinTV;
 vector<statement> statementVec;
 bool debug=0,record=0;
 
-//HELP- BOT SAY
+//HELP- TIME[v]
+class nowtime{
+public:
+    int year,month,day,hour,min;
+    nowtime(){year=1900;month=1;day=1;hour=0;min=0;}
+    int returnYear();
+    int returnMonth();
+    int returnday();
+    int returnHour();
+    int returnMin();
+    void getTime(){
+        time_t tt=time(NULL);
+        tm* t=localtime(&tt);
+        year += t->tm_year;
+        month = t->tm_mon+1;
+        day = t->tm_mday;
+        hour = t->tm_hour;
+        min = t->tm_min;
+        
+    }
+    
+    void showTime(){
+        cout<<"["<<year<<"/"<<setw(2)<<setfill('0')<<month<<"/"<<setw(2)<<setfill('0')<<day;
+        cout<<" "<<setw(2)<<setfill('0')<<hour<<":"<<setw(2)<<setfill('0')<<min<<"]";
+    }
+    
+    string returnTime(){
+        string str=to_string(year);
+        str.append("/");
+        str.append(to_string(month));
+        str.append("/");
+        str.append(to_string(day));
+        str.append(" ");
+        str.append(to_string(hour));
+        str.append(":");
+        str.append(to_string(min));
+        return str;
+    }
+    
+};
+
+//HELP- BOT SAY[v]
 void botSay(string tosay){
     cout<<"BOT> "<<tosay<<endl;
 }
 
-//HELP- DEBUG SAY
+//HELP- DEBUG SAY[v]
 void debugSay(string tosay){
     cout<<"DEBUG> "<<tosay<<endl;
 }
 
-//STRUCT- 事實結構
+//STRUCT- 事實結構[v]
 struct fact{
     string conclusion;
     string state;
@@ -68,7 +115,7 @@ struct fact{
     }
 };
 
-//HELPER- FACT ADDER
+//HELP- FACT ADDER[v]
 void factAdder(string conclu){
     int exist=-1;
     for(int i=0;i<factVec.size();i++){
@@ -82,24 +129,35 @@ void factAdder(string conclu){
     
 }
 
-//STRUCT- 小顆狀態結構
+//STRUCT- 小顆狀態結構[v]
 struct statement{
     string condition;
     string shouldBeState;
-    bool ifStateEqual;
-    int score;
+    int ifStateEqual;
+    double historyTimes;
+    double ratio;
+    double Origscore;
+    double score;
     statement(){}
     statement(string cond,string shouldbe){
         this->condition=cond;
         this->shouldBeState=shouldbe;
-        this->ifStateEqual=0;
+        this->ifStateEqual=-1;
+        ratio=1;
+        Origscore=1;
+        score=1;
+        historyTimes=0;
     }
     bool operator==(const statement& rhs) const{
         return (condition == rhs.condition)&&(shouldBeState == rhs.shouldBeState);
     }
+    void scoreRefresh(){
+        //THERE IS A PARAMETER HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        score=ratio*Origscore*7;
+    }
 };
 
-//HELPER- STATEMENT CHECKER AND ADDER
+//HELP- STATEMENT CHECKER AND ADDER[v]
 statement statementAdder(string conclusion, string shouldBeState){
     int exist=-1;
     for(int i=0;i<statementVec.size();i++){
@@ -118,17 +176,17 @@ statement statementAdder(string conclusion, string shouldBeState){
     }
 }
 
-//STRUCT- 邏輯結構，包含名稱(rule name)、sug(suggestion)、result statement*、OR vector<AND vector<狀態結構*in statement vector>>
+//STRUCT- 邏輯結構，包含名稱(rule name)、sug(suggestion)、result statement*、OR vector<AND vector<狀態結構*in statement vector>>   [v]
 class tree{
 public:
     string name;
     string suggestion;
     statement resultStatement;
     vector<vector<statement > >  OR;
-    
     tree(string name,string conclusion,string shouldBeState){
         this->name=name;
         resultStatement = statementAdder(conclusion, shouldBeState);
+
     }
     tree(string name,string conclusion,string shouldBeState,string suggestion){
         this->name=name;
@@ -149,12 +207,21 @@ public:
     }
     
     void writelog(){
-        
+        fstream file;
+        ofstream log("./logfile.txt",ios_base::app | ios_base::out);
+        nowtime time;
+        time.getTime();
+        log<<time.year<<setw(2)<<setfill('0')<<time.month<<setw(2)<<setfill('0')<<time.day;
+        log<<" "<<setw(2)<<setfill('0')<<time.hour<<setw(2)<<setfill('0')<<time.min<<" ";
+        log<<name<<": "<<suggestion.substr(1,suggestion.length()-2);
+    }
+    bool operator<(const tree &rhs) const {
+        return resultStatement.score < resultStatement.score;
     }
     
 };
 
-//HELPER- TREE ADDER
+//HELP- TREE ADDER [v]
 void treeAdder(string ruleName,string conclusion,string conclusionShouldBeState,string suggestion,string ifUncut){
     
     int exist=-1;
@@ -209,7 +276,7 @@ void treeAdder(string ruleName,string conclusion,string conclusionShouldBeState,
     t.orPusher(andVec);
 }
 
-//HELPER- PROMPT ADDER
+//HELP- PROMPT ADDER [v]
 void promptAdder(string conclusion,string promptIn){
     for(int i=0;i<factVec.size();i++){
         if(factVec[i].conclusion==conclusion){
@@ -219,7 +286,7 @@ void promptAdder(string conclusion,string promptIn){
     }
 }
 
-//MAIN- OPENRULE
+//MAIN- OPENRULE [v]
 void openrule(string filepath){
     int ruleCount=0;
     char* filepathChar=&filepath[0u];
@@ -260,7 +327,7 @@ void openrule(string filepath){
     botSay(tosay);
 }
 
-//MAIN- LIST RULE
+//MAIN- LIST RULE [v]
 void listrule(){
     for(int ti=0;ti<treeVec.size();ti++){
         string tosay=treeVec[ti].name.append(":\n");
@@ -288,7 +355,7 @@ void listrule(){
     }
 }
 
-//MAIN- ADDRULE
+//MAIN- ADDRULE [v]
 void addrule(){
     string todo;
     string in;
@@ -384,7 +451,7 @@ void addrule(){
     
 }
 
-//MAIN- LISTCLAUSE
+//MAIN- LISTCLAUSE [v]
 void listclause(){
     for(int i=0;i<factVec.size();i++){
         string tosay=factVec[i].conclusion;
@@ -395,7 +462,7 @@ void listclause(){
     cout<<endl;
 }
 
-//MAIN- ADDCLAUSE
+//MAIN- ADDCLAUSE [v]
 bool addclause(string in){
     string ruleName,statement,tosay;
     int equalIndex=0,chk=0;
@@ -433,7 +500,7 @@ bool addclause(string in){
     return chk;
 }
 
-//MAIN- OPENCLAUSE
+//MAIN- OPENCLAUSE [v]
 void openclause(string filepath){
     int count=0;
     char* filepathChar = &filepath[0u];
@@ -449,20 +516,167 @@ void openclause(string filepath){
     ts.append(" clauses read\n");
 }
 
-//HELPER- scoreUpdate
-void scoreUpdate(){
-    
+//HELP- update score from every tree's resultstatement to statementVec(return 1 if at least one value is changed)
+bool scoreUpdateToSV(){
+    bool changed=0;
+    for(int ti=0;ti<treeVec.size();ti++){
+        for(int si=0;si<statementVec.size();si++){
+            if(statementVec[si]==treeVec[ti].resultStatement){
+                if(statementVec[si].Origscore!=treeVec[ti].resultStatement.Origscore){
+                    changed=1;
+                }
+                statementVec[si].ratio=treeVec[ti].resultStatement.ratio;
+                statementVec[si].Origscore=treeVec[ti].resultStatement.Origscore;
+                statementVec[si].scoreRefresh();
+                treeVec[ti].resultStatement.scoreRefresh();
+            }
+        }
+    }
+    return changed;
 }
 
-//HELPER- read log to assign initial score
+//HELP- update score from statementvec to every statement element in treeVec(return 1 if at least one value is changed)
+bool scoreUpdateToTV(){
+    bool changed=0;
+    for(int si=0;si<statementVec.size();si++){
+        for(int ti=0;ti<treeVec.size();ti++){
+            if(statementVec[si]==treeVec[ti].resultStatement){
+                if(statementVec[si].Origscore!=treeVec[ti].resultStatement.Origscore){
+                    changed=1;
+                }
+                treeVec[ti].resultStatement.ratio=statementVec[si].ratio;
+                treeVec[ti].resultStatement.Origscore=statementVec[si].Origscore;
+                statementVec[si].scoreRefresh();
+                treeVec[ti].resultStatement.scoreRefresh();
+            }
+            for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+                for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
+                    if(statementVec[si]==treeVec[ti].OR[oi][ai]){
+                        if(statementVec[si].Origscore!=treeVec[ti].OR[oi][ai].Origscore){
+                            changed=1;
+                        }
+                        treeVec[ti].OR[oi][ai].ratio=statementVec[si].ratio;
+                        treeVec[ti].OR[oi][ai].Origscore=statementVec[si].Origscore;
+                        statementVec[si].scoreRefresh();
+                        treeVec[ti].resultStatement.scoreRefresh();
+                    }
+                }
+            }
+        }
+    }
+    return changed;
+}
+
+//HELP- read log to assign initial score [v]
+void readlog(){
+    string filepath="/Users/sean/Desktop/dp/code/log.txt";
+    char* filepathChar=&filepath[0u];
+    double totalLine=countlines(filepathChar);
+    for(double line=0;line<totalLine;line++){
+        string str=readline(filepathChar, line);
+        int spindex=(int)str.find(' ');
+        spindex=(int)str.find(' ',spindex+1);
+        int endindex=(int)str.find('_');
+        string statename=str.substr(spindex,endindex-spindex);
+        statename=trim(statename);
+        for(int ti=0;ti<treeVec.size();ti++){
+            if(treeVec[ti].name==statename){
+                for(int stindex=0;stindex<statementVec.size();stindex++){
+                    if(statementVec[stindex]==treeVec[ti].resultStatement){
+                        statementVec[stindex].historyTimes++;
+                    }
+                }
+            }
+        }
+    }
+    for(int treeindex=0;treeindex<treeVec.size();treeindex++){
+        for(int stateindex=0;stateindex<statementVec.size();stateindex++){
+            if(treeVec[treeindex].resultStatement==statementVec[stateindex]){
+                treeVec[treeindex].resultStatement.historyTimes=statementVec[stateindex].historyTimes;
+                treeVec[treeindex].resultStatement.ratio=2-(double)(statementVec[stateindex].historyTimes/totalLine);
+                scoreUpdateToSV();
+            }
+        }
+    }
+}
+
+//HELP- update ifequal from tree's result statement to statementVec
+bool stateUpdateToSV(){
+    bool changed=0;
+    for(int ti=0;ti<treeVec.size();ti++){
+        for(int si=0;si<statementVec.size();si++){
+            if(statementVec[si]==treeVec[ti].resultStatement){
+                if(statementVec[si].ifStateEqual!=treeVec[ti].resultStatement.ifStateEqual){
+                    changed=1;
+                }
+                statementVec[si].ifStateEqual=treeVec[ti].resultStatement.ifStateEqual;
+            }
+        }
+    }
+    return changed;
+}
+
+//HELP- update statementVec's statment ifEqual by reading facts
+bool stateUpdateToTV(){
+    bool changed=0;
+    for(int si=0;si<statementVec.size();si++){
+        for(int ti=0;ti<treeVec.size();ti++){
+            if(statementVec[si]==treeVec[ti].resultStatement){
+                if(statementVec[si].ifStateEqual!=treeVec[ti].resultStatement.ifStateEqual){
+                    changed=1;
+                }
+                treeVec[ti].resultStatement.ifStateEqual=statementVec[si].ifStateEqual;
+            }
+            for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+                for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
+                    if(statementVec[si]==treeVec[ti].OR[oi][ai]){
+                        if(statementVec[si].ifStateEqual!=treeVec[ti].OR[oi][ai].ifStateEqual){
+                            changed=1;
+                        }
+                        treeVec[ti].OR[oi][ai].ifStateEqual=statementVec[si].ifStateEqual;
+                    }
+                }
+            }
+        }
+    }
+    return changed;
+}
+
+//HELP- updateSV state from fV
+bool updateSVIFfromFV(){
+    bool changed=0;
+    for(int fi=0;fi<factVec.size();fi++){
+        for(int si=0;si<statementVec.size();si++){
+            if(statementVec[si].condition==factVec[fi].conclusion){
+                if(factVec[fi].state!="?"){
+                    if(statementVec[si].shouldBeState==factVec[fi].state){
+                        statementVec[si].ifStateEqual=1;
+                    }else{
+                        statementVec[si].ifStateEqual=0;
+                    }
+                    statementVec[si].Origscore=0;
+                    statementVec[si].scoreRefresh();
+                }
+            }
+        }
+    }
+    stateUpdateToTV();
+    scoreUpdateToTV();
+    return changed;
+}
 
 //MAIN- INFERENCE
 void inf(){
-    
+    readlog();
+    updateSVIFfromFV();
+    //自我判斷直到沒有改變（若最終條件已知不成立，score變負）
+    //tree排序
+    //輪流prompt，每prompt一次就自我判斷一輪，再排序
 }
 
 int main(){
-    string rulepath="/Users/sean/Desktop/dp/A_rules.txt";
+    
+    //string rulepath="/Users/sean/Desktop/dp/A_rules.txt";
     string cmdU,cmd,arg="";
     int spaceIdx;
     cout<<"> ";

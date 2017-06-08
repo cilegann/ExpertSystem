@@ -1,1 +1,4 @@
-20170502 1030 cheetah_1: The animal is a cheetah.20170504 1230 cheetah_1: The animal is a cheetah.20170505 1240 tiger_1: The animal is a tiger.20170506 1430 cheetah_1: The animal is a cheetah.
+20170502 1030 cheetah_1: The animal is a cheetah.
+20170504 1230 cheetah_1: The animal is a cheetah.
+20170505 1240 tiger_1: The animal is a tiger.
+20170506 1430 cheetah_1: The animal is a cheetah.
