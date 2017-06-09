@@ -17,7 +17,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <iomanip>
-
+//算分數位置
+//輸出debug的位置
 
 using namespace std;
 
@@ -36,6 +37,7 @@ vector<tree> finalTV;
 vector<tree> ordinTV;
 vector<statement> statementVec;
 bool debug=0,record=0;
+string lastclause;
 
 //HELP- TIME[v]
 class nowtime{
@@ -208,7 +210,7 @@ public:
     
     void writelog(){
         fstream file;
-        ofstream log("./logfile.txt",ios_base::app | ios_base::out);
+        ofstream log("./log.txt",ios_base::app | ios_base::out);
         nowtime time;
         time.getTime();
         log<<time.year<<setw(2)<<setfill('0')<<time.month<<setw(2)<<setfill('0')<<time.day;
@@ -355,6 +357,34 @@ void listrule(){
     }
 }
 
+void listruleSingledebug(int ti){
+    
+        string tosay=treeVec[ti].name.append(":\n");
+        for(int oi = 0 ; oi<treeVec[ti].OR.size();oi++){
+            if(oi>0)
+                tosay.append(" ^ ");
+            tosay.append(" [");
+            for(int ai=0 ; ai < treeVec[ti].OR[oi].size() ; ai++){
+                if(ai>0)
+                    tosay.append(" & ");
+                tosay.append("(");
+                tosay.append(treeVec[ti].OR[oi][ai].condition);
+                tosay.append(" = ");
+                tosay.append(treeVec[ti].OR[oi][ai].shouldBeState);
+                tosay.append(")");
+            }
+            tosay.append("] ");
+        }
+        tosay.append("\n -> ");
+        tosay.append(treeVec[ti].resultStatement.condition);
+        tosay.append(" = ");
+        tosay.append(treeVec[ti].resultStatement.shouldBeState);
+        tosay.append("\n");
+        debugSay(tosay);
+}
+
+//HELP
+
 //MAIN- ADDRULE [v]
 void addrule(){
     string todo;
@@ -462,6 +492,16 @@ void listclause(){
     cout<<endl;
 }
 
+//HELP- LISTSINGLECLAUSE [v]
+void listclause(int i){
+    
+    string tosay=factVec[i].conclusion;
+    tosay.append(" = ");
+    tosay.append(factVec[i].state);
+    debugSay(tosay);
+    cout<<endl;
+}
+
 //MAIN- ADDCLAUSE [v]
 bool addclause(string in){
     string ruleName,statement,tosay;
@@ -514,6 +554,7 @@ void openclause(string filepath){
     ts.append(": ");
     ts.append(to_string(count));
     ts.append(" clauses read\n");
+    lastclause=filepath;
 }
 
 //HELP- update score from every tree's resultstatement to statementVec(return 1 if at least one value is changed)
@@ -665,11 +706,136 @@ bool updateSVIFfromFV(){
     return changed;
 }
 
+
+void clearclause(){
+    for(int i=0;i<factVec.size();i++){
+        factVec[i].state="?";
+    }
+    botSay("是否自動讀入上次讀入之事實檔案（T/F）");
+    cout<<">";
+    string tf;
+    cin>>tf;
+    if(tf=="T"){
+        openclause(lastclause);
+    }
+    botSay("推論繼續");
+}
+
+bool logic(){
+    bool changed=0;
+    for(int ti=0;ti<treeVec.size();ti++){
+        stateUpdateToTV();
+        vector<int> orlogic;
+        int finaltf=-1;
+        for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+            bool ifAndAllknown=1;
+            for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
+                if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
+                    ifAndAllknown=0;
+                }
+            }
+            int andlogic=1;
+            if(ifAndAllknown){
+                for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
+                    if(treeVec[ti].OR[oi][ai].ifStateEqual==0){
+                        andlogic=0;
+                    }
+                }
+                orlogic.push_back(andlogic);
+            }
+        }
+        if(orlogic.size()!=0){
+            finaltf=0;
+            for(int orli=0;orli<orlogic.size();orli++){
+                finaltf+=orlogic[orli];
+            }
+            if(finaltf){
+                finaltf=1;
+            }
+        }
+
+        if(treeVec[ti].resultStatement.ifStateEqual==-1){
+            if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
+                changed=1;
+                treeVec[ti].resultStatement.ifStateEqual=finaltf;
+                stateUpdateToSV();
+                //score update here[v]
+                if(finaltf>=0){
+                    //PARAM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    treeVec[ti].resultStatement.Origscore=0;
+                    if(treeVec[ti].suggestion!="X"){
+                        //PARAM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        treeVec[ti].resultStatement.Origscore=-10;
+                    }
+                    treeVec[ti].resultStatement.scoreRefresh();
+                }else{
+                    //tree self get score[v]
+                    treeVec[ti].resultStatement.Origscore=0;
+                    for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+                        for(int ai=0;ai<treeVec[ti].OR[oi].size();oi++){
+                            treeVec[ti].resultStatement.Origscore+=treeVec[ti].OR[oi][ai].score;
+                        }
+                    }
+                    treeVec[ti].resultStatement.scoreRefresh();
+                }
+                
+                //debug code here
+                listruleSingledebug(ti);
+                
+                for(int fi=0;fi<factVec.size();fi++){
+                    if(factVec[fi].conclusion==treeVec[ti].resultStatement.condition){
+                        if(finaltf)
+                            factVec[fi].state="T";
+                        else
+                            factVec[fi].state="F";
+                        listclause(fi);
+                    }
+                }
+            }
+        }else if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
+            botSay("事實矛盾，以下列出所有事實");
+            listclause();
+            botSay("Enter 'C' to clear facts, 'A' to add(change) facts");
+            string chs;
+            while(cin>>chs){
+                if(chs=="C")
+                    clearclause();
+                else if (chs=="A"){
+                    int s=1;
+                    while(s){
+                        string clause;
+                        botSay("Enter clause");
+                        cout<<">";
+                        cin>>clause;
+                        addclause(clause);
+                        botSay("Enter '1' to continue adding, '0' to stop adding");
+                        cout<<">";
+                        cin>>s;
+                    }
+                }
+            }
+        }
+        
+        //sug here, record here[v]
+        if(finaltf==1&&treeVec[ti].suggestion!="X"){
+            botSay(treeVec[ti].suggestion);
+            treeVec[ti].writelog();
+        }
+
+    }
+    return changed;
+}
+
+
 //MAIN- INFERENCE
 void inf(){
     readlog();
     updateSVIFfromFV();
-    //自我判斷直到沒有改變（若最終條件已知不成立，score變負）
+    //自我判斷直到沒有改變（若結論已得到，score=0；若有sug的最終條件已知不成立，score變負）
+    bool logicChanged=1;
+    while(logicChanged){
+        logicChanged=logic();
+    }
     //tree排序
     //輪流prompt，每prompt一次就自我判斷一輪，再排序
 }
