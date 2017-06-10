@@ -217,9 +217,12 @@ public:
         log<<" "<<setw(2)<<setfill('0')<<time.hour<<setw(2)<<setfill('0')<<time.min<<" ";
         log<<name<<": "<<suggestion.substr(1,suggestion.length()-2);
     }
+    
     bool operator<(const tree &rhs) const {
-        return resultStatement.score < resultStatement.score;
+        //為了降序排序
+        return resultStatement.score < rhs.resultStatement.score;
     }
+    
     
 };
 
@@ -358,7 +361,7 @@ void listrule(){
 }
 
 void listruleSingledebug(int ti){
-    
+    vector<string> conclution;
         string tosay=treeVec[ti].name.append(":\n");
         for(int oi = 0 ; oi<treeVec[ti].OR.size();oi++){
             if(oi>0)
@@ -369,6 +372,7 @@ void listruleSingledebug(int ti){
                     tosay.append(" & ");
                 tosay.append("(");
                 tosay.append(treeVec[ti].OR[oi][ai].condition);
+                conclution.push_back(treeVec[ti].OR[oi][ai].condition);
                 tosay.append(" = ");
                 tosay.append(treeVec[ti].OR[oi][ai].shouldBeState);
                 tosay.append(")");
@@ -377,10 +381,22 @@ void listruleSingledebug(int ti){
         }
         tosay.append("\n -> ");
         tosay.append(treeVec[ti].resultStatement.condition);
+        conclution.push_back(treeVec[ti].resultStatement.condition);
         tosay.append(" = ");
         tosay.append(treeVec[ti].resultStatement.shouldBeState);
         tosay.append("\n");
         debugSay(tosay);
+    for(int i=0;i<conclution.size();i++){
+        for(int j=0;j<factVec.size();j++){
+            if(factVec[j].conclusion==conclution[i]){
+                string tos="FACT: ";
+                tos.append(factVec[i].conclusion);
+                tos.append(" = ");
+                tos.append(factVec[i].state);
+                debugSay(tos);
+            }
+        }
+    }
 }
 
 //HELP
@@ -610,7 +626,7 @@ bool scoreUpdateToTV(){
 
 //HELP- read log to assign initial score [v]
 void readlog(){
-    string filepath="/Users/sean/Desktop/dp/code/log.txt";
+    string filepath="./log.txt";
     char* filepathChar=&filepath[0u];
     double totalLine=countlines(filepathChar);
     for(double line=0;line<totalLine;line++){
@@ -706,7 +722,7 @@ bool updateSVIFfromFV(){
     return changed;
 }
 
-
+//HELP- clear facts
 void clearclause(){
     for(int i=0;i<factVec.size();i++){
         factVec[i].state="?";
@@ -721,123 +737,184 @@ void clearclause(){
     botSay("推論繼續");
 }
 
-bool logic(){
-    bool changed=0;
+//HELP- logic runner
+int logic(){
+    //0:no change, 1:change, -1:prompt
+    int changed=0;
     for(int ti=0;ti<treeVec.size();ti++){
-        stateUpdateToTV();
-        vector<int> orlogic;
-        int finaltf=-1;
-        for(int oi=0;oi<treeVec[ti].OR.size();oi++){
-            bool ifAndAllknown=1;
-            for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
-                if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
-                    ifAndAllknown=0;
-                }
-            }
-            int andlogic=1;
-            if(ifAndAllknown){
+        if(treeVec[ti].resultStatement.score>0){
+            stateUpdateToTV();
+            vector<int> orlogic;
+            int finaltf=-1;
+            int unknowncount=(int)treeVec[ti].OR.size();
+            for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+                bool ifAndAllknown=1;
                 for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
-                    if(treeVec[ti].OR[oi][ai].ifStateEqual==0){
-                        andlogic=0;
+                    if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
+                        ifAndAllknown=0;
                     }
                 }
-                orlogic.push_back(andlogic);
-            }
-        }
-        if(orlogic.size()!=0){
-            finaltf=0;
-            for(int orli=0;orli<orlogic.size();orli++){
-                finaltf+=orlogic[orli];
-            }
-            if(finaltf){
-                finaltf=1;
-            }
-        }
-
-        if(treeVec[ti].resultStatement.ifStateEqual==-1){
-            if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
-                changed=1;
-                treeVec[ti].resultStatement.ifStateEqual=finaltf;
-                stateUpdateToSV();
-                //score update here[v]
-                if(finaltf>=0){
-                    //PARAM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    treeVec[ti].resultStatement.Origscore=0;
-                    if(treeVec[ti].suggestion!="X"){
-                        //PARAM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        treeVec[ti].resultStatement.Origscore=-10;
-                    }
-                    treeVec[ti].resultStatement.scoreRefresh();
-                }else{
-                    //tree self get score[v]
-                    treeVec[ti].resultStatement.Origscore=0;
-                    for(int oi=0;oi<treeVec[ti].OR.size();oi++){
-                        for(int ai=0;ai<treeVec[ti].OR[oi].size();oi++){
-                            treeVec[ti].resultStatement.Origscore+=treeVec[ti].OR[oi][ai].score;
+                int andlogic=1;
+                if(ifAndAllknown){
+                    unknowncount--;
+                    for(int ai=0;ai<treeVec[ti].OR[oi].size();ai++){
+                        if(treeVec[ti].OR[oi][ai].ifStateEqual==0){
+                            andlogic=0;
                         }
                     }
-                    treeVec[ti].resultStatement.scoreRefresh();
+                    orlogic.push_back(andlogic);
                 }
-                
-                //debug code here
-                listruleSingledebug(ti);
-                
-                for(int fi=0;fi<factVec.size();fi++){
-                    if(factVec[fi].conclusion==treeVec[ti].resultStatement.condition){
-                        if(finaltf)
-                            factVec[fi].state="T";
-                        else
-                            factVec[fi].state="F";
-                        listclause(fi);
+            }
+            if(orlogic.size()!=0){
+                finaltf=0;
+                for(int orli=0;orli<orlogic.size();orli++){
+                    finaltf+=orlogic[orli];
+                }
+                if(finaltf){
+                    finaltf=1;
+                }else if(unknowncount!=0){
+                    finaltf=-1;
+                }
+            }
+            
+            if(treeVec[ti].resultStatement.ifStateEqual==-1){
+                if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
+                    changed=1;
+                    treeVec[ti].resultStatement.ifStateEqual=finaltf;
+                    stateUpdateToSV();
+                    //score update here[v]
+                    if(finaltf>=0){
+                        //PARAM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        treeVec[ti].resultStatement.Origscore=0;
+                        if(treeVec[ti].suggestion!="X"){
+                            //PARAM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            treeVec[ti].resultStatement.Origscore=0;
+                        }
+                        treeVec[ti].resultStatement.scoreRefresh();
+                    }else{
+                        //tree self get score[v]
+                        treeVec[ti].resultStatement.Origscore=0;
+                        for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+                            for(int ai=0;ai<treeVec[ti].OR[oi].size();oi++){
+                                treeVec[ti].resultStatement.Origscore+=treeVec[ti].OR[oi][ai].score;
+                            }
+                        }
+                        treeVec[ti].resultStatement.scoreRefresh();
+                    }
+                    scoreUpdateToSV();
+                    scoreUpdateToTV();
+                    //debug code here [v]
+                    if(debug)
+                        listruleSingledebug(ti);
+                    
+                    for(int fi=0;fi<factVec.size();fi++){
+                        if(factVec[fi].conclusion==treeVec[ti].resultStatement.condition){
+                            if(finaltf)
+                                factVec[fi].state="T";
+                            else
+                                factVec[fi].state="F";
+                            if(debug)
+                                listclause(fi);
+                        }
+                    }
+                }
+            }else if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
+                botSay("事實矛盾，以下列出所有事實");
+                listclause();
+                botSay("Enter 'C' to clear facts, 'A' to add(change) facts");
+                string chs;
+                while(cin>>chs){
+                    if(chs=="C")
+                        clearclause();
+                    else if (chs=="A"){
+                        int s=1;
+                        while(s){
+                            string clause;
+                            botSay("Enter clause");
+                            cout<<">";
+                            cin>>clause;
+                            addclause(clause);
+                            botSay("Enter '1' to continue adding, '0' to stop adding");
+                            cout<<">";
+                            cin>>s;
+                        }
                     }
                 }
             }
-        }else if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
-            botSay("事實矛盾，以下列出所有事實");
-            listclause();
-            botSay("Enter 'C' to clear facts, 'A' to add(change) facts");
-            string chs;
-            while(cin>>chs){
-                if(chs=="C")
-                    clearclause();
-                else if (chs=="A"){
-                    int s=1;
-                    while(s){
-                        string clause;
-                        botSay("Enter clause");
-                        cout<<">";
-                        cin>>clause;
-                        addclause(clause);
-                        botSay("Enter '1' to continue adding, '0' to stop adding");
-                        cout<<">";
-                        cin>>s;
-                    }
-                }
+            
+            //sug here, record here[v]
+            if(finaltf==1&&treeVec[ti].suggestion!="X"){
+                botSay(treeVec[ti].suggestion);
+                if(record)
+                    treeVec[ti].writelog();
+                return -1;
             }
+            cout<<" ";
         }
-        
-        //sug here, record here[v]
-        if(finaltf==1&&treeVec[ti].suggestion!="X"){
-            botSay(treeVec[ti].suggestion);
-            treeVec[ti].writelog();
-        }
-
     }
+
+    stateUpdateToTV();
     return changed;
 }
 
+
+//HELP- promper
+bool promper(){
+    bool prompted;
+    for(int ti=0;ti<treeVec.size();ti++){
+        for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+            for(int ai=0;ai<treeVec[ti].OR[ai].size();ai++){
+                if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
+                    for(int fi=0;fi<factVec.size();fi++){
+                        if(factVec[fi].conclusion==treeVec[ti].OR[oi][ai].condition && factVec[fi].prompt!="X"&&treeVec[ti].resultStatement.score>0&&factVec[fi].state=="?"){
+                            botSay(factVec[fi].prompt);
+                            cout<<"> ";
+                            string input;
+                            cin>>input;
+                            factVec[fi].state=input;
+                            goto afterloop;
+                        }
+                    //fact for end
+                    }
+                }
+            //and for end
+            }
+        //or for and
+        }
+    //tree for end
+    }
+afterloop:
+    updateSVIFfromFV();
+    int control=logic();
+    while(control==1){
+        control=logic();
+    }
+    if(control==0)
+        prompted=1;
+    else
+        prompted=0;
+    
+    return prompted;
+}
 
 //MAIN- INFERENCE
 void inf(){
     readlog();
     updateSVIFfromFV();
-    //自我判斷直到沒有改變（若結論已得到，score=0；若有sug的最終條件已知不成立，score變負）
-    bool logicChanged=1;
-    while(logicChanged){
+    //自我判斷直到沒有改變（若結論已得到，score=0）[v]
+    int logicChanged=logic();
+    while(logicChanged==1){
         logicChanged=logic();
     }
     //tree排序
+    sort(treeVec.begin(),treeVec.end());
     //輪流prompt，每prompt一次就自我判斷一輪，再排序
+    bool toprompt=promper();
+    while(toprompt){
+        toprompt=promper();
+    }
+    botSay("Inference end. Clear all fact clauses");
+    clearclause();
 }
 
 int main(){
