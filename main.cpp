@@ -17,9 +17,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <iomanip>
-//算分數位置
-//輸出debug的位置
-
 using namespace std;
 
 //函數 全域變數 宣告[v]
@@ -57,14 +54,11 @@ public:
         day = t->tm_mday;
         hour = t->tm_hour;
         min = t->tm_min;
-        
     }
-    
     void showTime(){
         cout<<"["<<year<<"/"<<setw(2)<<setfill('0')<<month<<"/"<<setw(2)<<setfill('0')<<day;
         cout<<" "<<setw(2)<<setfill('0')<<hour<<":"<<setw(2)<<setfill('0')<<min<<"]";
     }
-    
     string returnTime(){
         string str=to_string(year);
         str.append("/");
@@ -77,19 +71,15 @@ public:
         str.append(to_string(min));
         return str;
     }
-    
 };
-
 //HELP- BOT SAY[v]
 void botSay(string tosay){
     cout<<"BOT> "<<tosay<<endl;
 }
-
 //HELP- DEBUG SAY[v]
 void debugSay(string tosay){
-    cout<<"DEBUG> "<<tosay<<endl;
+    cout<<"      DEBUG> "<<tosay<<endl;
 }
-
 //STRUCT- 事實結構[v]
 struct fact{
     string conclusion;
@@ -116,7 +106,6 @@ struct fact{
         prompt=in;
     }
 };
-
 //HELP- FACT ADDER[v]
 void factAdder(string conclu){
     int exist=-1;
@@ -128,9 +117,7 @@ void factAdder(string conclu){
     if(exist==-1){
         factVec.push_back(fact(conclu));
     }
-    
 }
-
 //STRUCT- 小顆狀態結構[v]
 struct statement{
     string condition;
@@ -151,14 +138,13 @@ struct statement{
         historyTimes=0;
     }
     bool operator==(const statement& rhs) const{
-        return (condition == rhs.condition)&&(shouldBeState == rhs.shouldBeState);
+        return ((condition == rhs.condition)&&(shouldBeState == rhs.shouldBeState));
     }
     void scoreRefresh(){
         //THERE IS A PARAMETER HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         score=ratio*Origscore*7;
     }
 };
-
 //HELP- STATEMENT CHECKER AND ADDER[v]
 statement statementAdder(string conclusion, string shouldBeState){
     int exist=-1;
@@ -177,8 +163,7 @@ statement statementAdder(string conclusion, string shouldBeState){
         return statementVec.back();
     }
 }
-
-//STRUCT- 邏輯結構，包含名稱(rule name)、sug(suggestion)、result statement*、OR vector<AND vector<狀態結構*in statement vector>>   [v]
+//STRUCT- 邏輯結構，包含名稱(rule name)、sug(suggestion)、result statement、OR vector<AND vector<狀態結構in statement vector>>   [v]
 class tree{
 public:
     string name;
@@ -195,19 +180,15 @@ public:
         resultStatement = statementAdder(conclusion, shouldBeState);
         this->suggestion=suggestion;
     }
-    
     bool operator==(const tree& rhs) const{
         return name == rhs.name;
     }
-    
     void orPusher(vector<statement> andvec){
         OR.push_back(andvec);
     }
-    
     void printSug(){
         botSay(suggestion);
     }
-    
     void writelog(){
         fstream file;
         ofstream log("./log.txt",ios_base::app | ios_base::out);
@@ -215,20 +196,15 @@ public:
         time.getTime();
         log<<time.year<<setw(2)<<setfill('0')<<time.month<<setw(2)<<setfill('0')<<time.day;
         log<<" "<<setw(2)<<setfill('0')<<time.hour<<setw(2)<<setfill('0')<<time.min<<" ";
-        log<<name<<": "<<suggestion.substr(1,suggestion.length()-2);
+        log<<name<<"_1: "<<suggestion.substr(1,suggestion.length()-4)<<"\n";
     }
-    
     bool operator<(const tree &rhs) const {
-        //為了降序排序
         return resultStatement.score < rhs.resultStatement.score;
     }
-    
-    
 };
 
 //HELP- TREE ADDER [v]
 void treeAdder(string ruleName,string conclusion,string conclusionShouldBeState,string suggestion,string ifUncut){
-    
     int exist=-1;
     for(int i=0;i<treeVec.size();i++){
         if(treeVec[i].name==ruleName){
@@ -280,7 +256,6 @@ void treeAdder(string ruleName,string conclusion,string conclusionShouldBeState,
     }
     t.orPusher(andVec);
 }
-
 //HELP- PROMPT ADDER [v]
 void promptAdder(string conclusion,string promptIn){
     for(int i=0;i<factVec.size();i++){
@@ -290,7 +265,6 @@ void promptAdder(string conclusion,string promptIn){
         }
     }
 }
-
 //MAIN- OPENRULE [v]
 void openrule(string filepath){
     int ruleCount=0;
@@ -331,11 +305,13 @@ void openrule(string filepath){
     tosay.append(" rules read\n");
     botSay(tosay);
 }
-
 //MAIN- LIST RULE [v]
 void listrule(){
+    cout<<endl<<"====LISTRULE START===="<<endl<<endl;
     for(int ti=0;ti<treeVec.size();ti++){
-        string tosay=treeVec[ti].name.append(":\n");
+        string tosay="RULE - ";
+        tosay.append(treeVec[ti].name);
+        tosay.append(":\n           ");
         for(int oi = 0 ; oi<treeVec[ti].OR.size();oi++){
             if(oi>0)
                 tosay.append(" ^ ");
@@ -351,18 +327,22 @@ void listrule(){
             }
             tosay.append("] ");
         }
-        tosay.append("\n -> ");
+        tosay.append(" -> ");
         tosay.append(treeVec[ti].resultStatement.condition);
         tosay.append(" = ");
         tosay.append(treeVec[ti].resultStatement.shouldBeState);
         tosay.append("\n");
         botSay(tosay);
     }
+    cout<<"=====LISTRULE END====="<<endl<<endl;
 }
-
+//HELP- List rule in when debugging [v]
 void listruleSingledebug(int ti){
     vector<string> conclution;
-        string tosay=treeVec[ti].name.append(":\n");
+    cout<<"     ===================DEBUG  SECTION==================="<<endl;
+    string tosay="RULE - ";
+    tosay.append(treeVec[ti].name);
+    tosay.append(":\n           ");
         for(int oi = 0 ; oi<treeVec[ti].OR.size();oi++){
             if(oi>0)
                 tosay.append(" ^ ");
@@ -379,7 +359,7 @@ void listruleSingledebug(int ti){
             }
             tosay.append("] ");
         }
-        tosay.append("\n -> ");
+        tosay.append(" -> ");
         tosay.append(treeVec[ti].resultStatement.condition);
         conclution.push_back(treeVec[ti].resultStatement.condition);
         tosay.append(" = ");
@@ -390,17 +370,16 @@ void listruleSingledebug(int ti){
         for(int j=0;j<factVec.size();j++){
             if(factVec[j].conclusion==conclution[i]){
                 string tos="FACT: ";
-                tos.append(factVec[i].conclusion);
+                tos.append(factVec[j].conclusion);
                 tos.append(" = ");
-                tos.append(factVec[i].state);
+                tos.append(factVec[j].state);
                 debugSay(tos);
             }
         }
     }
+    cout<<"    =================DEBUG  SECTION END=================";
+    cout<<endl;
 }
-
-//HELP
-
 //MAIN- ADDRULE [v]
 void addrule(){
     string todo;
@@ -493,31 +472,28 @@ void addrule(){
         promName=trim(promName);
         promptAdder(promName,prom);
     }
-    
-    
 }
-
 //MAIN- LISTCLAUSE [v]
 void listclause(){
+    botSay("====LIST CLAUSES START===");
     for(int i=0;i<factVec.size();i++){
         string tosay=factVec[i].conclusion;
         tosay.append(" = ");
         tosay.append(factVec[i].state);
         botSay(tosay);
     }
+    botSay("=====LIST CLAUSES END====");
     cout<<endl;
 }
-
 //HELP- LISTSINGLECLAUSE [v]
 void listclause(int i){
-    
-    string tosay=factVec[i].conclusion;
+    string tosay="RESULT: ";
+    tosay.append(factVec[i].conclusion);
     tosay.append(" = ");
     tosay.append(factVec[i].state);
     debugSay(tosay);
     cout<<endl;
 }
-
 //MAIN- ADDCLAUSE [v]
 bool addclause(string in){
     string ruleName,statement,tosay;
@@ -555,7 +531,6 @@ bool addclause(string in){
     botSay(tosay);
     return chk;
 }
-
 //MAIN- OPENCLAUSE [v]
 void openclause(string filepath){
     int count=0;
@@ -572,7 +547,6 @@ void openclause(string filepath){
     ts.append(" clauses read\n");
     lastclause=filepath;
 }
-
 //HELP- update score from every tree's resultstatement to statementVec(return 1 if at least one value is changed)
 bool scoreUpdateToSV(){
     bool changed=0;
@@ -591,7 +565,6 @@ bool scoreUpdateToSV(){
     }
     return changed;
 }
-
 //HELP- update score from statementvec to every statement element in treeVec(return 1 if at least one value is changed)
 bool scoreUpdateToTV(){
     bool changed=0;
@@ -623,9 +596,10 @@ bool scoreUpdateToTV(){
     }
     return changed;
 }
-
 //HELP- read log to assign initial score [v]
 void readlog(){
+    for(int i=0;i<statementVec.size();i++){statementVec[i].score=0;statementVec[i].ratio=2;statementVec[i].scoreRefresh();}
+    scoreUpdateToTV();
     string filepath="./log.txt";
     char* filepathChar=&filepath[0u];
     double totalLine=countlines(filepathChar);
@@ -656,7 +630,6 @@ void readlog(){
         }
     }
 }
-
 //HELP- update ifequal from tree's result statement to statementVec
 bool stateUpdateToSV(){
     bool changed=0;
@@ -672,7 +645,6 @@ bool stateUpdateToSV(){
     }
     return changed;
 }
-
 //HELP- update statementVec's statment ifEqual by reading facts
 bool stateUpdateToTV(){
     bool changed=0;
@@ -698,7 +670,6 @@ bool stateUpdateToTV(){
     }
     return changed;
 }
-
 //HELP- updateSV state from fV
 bool updateSVIFfromFV(){
     bool changed=0;
@@ -721,28 +692,26 @@ bool updateSVIFfromFV(){
     scoreUpdateToTV();
     return changed;
 }
-
 //HELP- clear facts
 void clearclause(){
     for(int i=0;i<factVec.size();i++){
         factVec[i].state="?";
     }
-    botSay("是否自動讀入上次讀入之事實檔案（T/F）");
-    cout<<">";
-    string tf;
-    cin>>tf;
-    if(tf=="T"){
-        openclause(lastclause);
+    for(int i=0;i<statementVec.size();i++){
+        statementVec[i].ifStateEqual=-1;
+        statementVec[i].Origscore=0;
+        statementVec[i].scoreRefresh();
     }
-    botSay("推論繼續");
+    scoreUpdateToTV();
+    stateUpdateToTV();
+    botSay("QUIT INFERENCE MODE");
 }
-
 //HELP- logic runner
 int logic(){
     //0:no change, 1:change, -1:prompt
     int changed=0;
     for(int ti=0;ti<treeVec.size();ti++){
-        if(treeVec[ti].resultStatement.score>0){
+        if(treeVec[ti].resultStatement.score>=0){
             stateUpdateToTV();
             vector<int> orlogic;
             int finaltf=-1;
@@ -819,29 +788,12 @@ int logic(){
                     }
                 }
             }else if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
-                botSay("事實矛盾，以下列出所有事實");
-                listclause();
-                botSay("Enter 'C' to clear facts, 'A' to add(change) facts");
-                string chs;
-                while(cin>>chs){
-                    if(chs=="C")
-                        clearclause();
-                    else if (chs=="A"){
-                        int s=1;
-                        while(s){
-                            string clause;
-                            botSay("Enter clause");
-                            cout<<">";
-                            cin>>clause;
-                            addclause(clause);
-                            botSay("Enter '1' to continue adding, '0' to stop adding");
-                            cout<<">";
-                            cin>>s;
-                        }
-                    }
-                }
+                botSay("事實矛盾，以下列出矛盾事實與規則");
+                listruleSingledebug(ti);
+                botSay("清除所有事實");
+                clearclause();
+                return -5;
             }
-            
             //sug here, record here[v]
             if(finaltf==1&&treeVec[ti].suggestion!="X"){
                 botSay(treeVec[ti].suggestion);
@@ -849,39 +801,47 @@ int logic(){
                     treeVec[ti].writelog();
                 return -1;
             }
-            cout<<" ";
+            //cout<<" ";
         }
     }
-
     stateUpdateToTV();
     return changed;
 }
-
-
-//HELP- promper
-bool promper(){
+//HELP- PROMPER with specific conclusion
+bool promper(string specConclu){
     bool prompted;
     for(int ti=0;ti<treeVec.size();ti++){
-        for(int oi=0;oi<treeVec[ti].OR.size();oi++){
-            for(int ai=0;ai<treeVec[ti].OR[ai].size();ai++){
-                if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
-                    for(int fi=0;fi<factVec.size();fi++){
-                        if(factVec[fi].conclusion==treeVec[ti].OR[oi][ai].condition && factVec[fi].prompt!="X"&&treeVec[ti].resultStatement.score>0&&factVec[fi].state=="?"){
-                            botSay(factVec[fi].prompt);
-                            cout<<"> ";
-                            string input;
-                            cin>>input;
-                            factVec[fi].state=input;
-                            goto afterloop;
+        if(treeVec[ti].resultStatement.condition==specConclu){
+            for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+                for(int ai=0;ai<treeVec[ti].OR[ai].size();ai++){
+                    if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
+                        for(int fi=0;fi<factVec.size();fi++){
+                            if(factVec[fi].conclusion==treeVec[ti].OR[oi][ai].condition &&treeVec[ti].resultStatement.score>0&&factVec[fi].state=="?"){
+                                if(factVec[fi].prompt!="X"){
+                                    if(debug){
+                                        listruleSingledebug(ti);
+                                        string tmp="REULT: PROMPT- ";
+                                        tmp.append(factVec[fi].prompt);
+                                        debugSay(tmp);
+                                    }
+                                    cout<<endl;
+                                    botSay(factVec[fi].prompt);
+                                    cout<<"> ";
+                                    string input;
+                                    cin>>input;
+                                    if(input=="QUIT"||input=="quit")
+                                        return 0;
+                                    factVec[fi].state=input;
+                                }else{
+                                    promper(factVec[fi].conclusion);
+                                }
+                                goto afterloop;
+                            }
                         }
-                    //fact for end
                     }
                 }
-            //and for end
             }
-        //or for and
         }
-    //tree for end
     }
 afterloop:
     updateSVIFfromFV();
@@ -893,32 +853,76 @@ afterloop:
         prompted=1;
     else
         prompted=0;
-    
     return prompted;
 }
-
-//MAIN- INFERENCE
+//HELP- promper [V]
+bool promper(){
+    bool prompted;
+    for(int ti=0;ti<treeVec.size();ti++){
+        for(int oi=0;oi<treeVec[ti].OR.size();oi++){
+            for(int ai=0;ai<treeVec[ti].OR[ai].size();ai++){
+                if(treeVec[ti].OR[oi][ai].ifStateEqual==-1){
+                    for(int fi=0;fi<factVec.size();fi++){
+                        if(factVec[fi].conclusion==treeVec[ti].OR[oi][ai].condition &&treeVec[ti].resultStatement.score>0&&factVec[fi].state=="?"){
+                            if(factVec[fi].prompt!="X"){
+                                if(debug){
+                                    listruleSingledebug(ti);
+                                    string tmp="REULT: PROMPT- ";
+                                    tmp.append(factVec[fi].prompt);
+                                    debugSay(tmp);
+                                }
+                                cout<<endl;
+                                botSay(factVec[fi].prompt);
+                                cout<<"> ";
+                                string input;
+                                cin>>input;
+                                if(input=="QUIT"||input=="quit")
+                                    return 0;
+                                factVec[fi].state=input;
+                            }else{
+                                promper(factVec[fi].conclusion);
+                            }
+                            goto afterloop;
+                        }
+                    }
+                }
+            }
+        }
+    }
+afterloop:
+    updateSVIFfromFV();
+    int control=logic();
+    while(control==1){
+        control=logic();
+    }
+    if(control==0)
+        prompted=1;
+    else
+        prompted=0;
+    return prompted;
+}
+//MAIN- INFERENCE[V]
 void inf(){
     readlog();
     updateSVIFfromFV();
+    sort(treeVec.begin(),treeVec.end());
     //自我判斷直到沒有改變（若結論已得到，score=0）[v]
     int logicChanged=logic();
-    while(logicChanged==1){
+    while(logicChanged==1)
         logicChanged=logic();
-    }
     //tree排序
-    sort(treeVec.begin(),treeVec.end());
-    //輪流prompt，每prompt一次就自我判斷一輪，再排序
-    bool toprompt=promper();
-    while(toprompt){
-        toprompt=promper();
-    }
-    botSay("Inference end. Clear all fact clauses");
-    clearclause();
-}
+    if(logicChanged!=-5){
+        sort(treeVec.begin(),treeVec.end());
+        //輪流prompt，每prompt一次就自我判斷一輪，再排序
+        bool toprompt=promper();
+        while(toprompt)
+            toprompt=promper();
+        botSay("Inference end. Clear all fact clauses");
+        clearclause();
 
+    }
+}
 int main(){
-    
     //string rulepath="/Users/sean/Desktop/dp/A_rules.txt";
     string cmdU,cmd,arg="";
     int spaceIdx;
@@ -951,7 +955,7 @@ int main(){
             }else if(cmd=="addclause"){
                 addclause(arg);
             }else if(cmd=="openclause"){
-                addclause(arg);
+                openclause(arg);
             }else if(cmd=="listclause"){
                 listclause();
             }else if(cmd=="inference"){
@@ -979,7 +983,6 @@ int main(){
     }
     return 0;
 }
-
 //HELPER- count lines in file
 int countlines(char* file){
     fstream filetoopen;
@@ -996,7 +999,6 @@ int countlines(char* file){
         return lines;
     }
 }
-
 //HELPER- read line from file
 string readline(char* file,int target_line){
     fstream filetoopen;
@@ -1008,19 +1010,16 @@ string readline(char* file,int target_line){
     }
     return line;
 }
-
 //HELPER- STRING GET RID OF SPACE
 string& trim(std::string & str){
     return ltrim(rtrim(str));
 }
-
 //HELPER- STRING GET RID OF LEFT_HAND_SIDE SPACE
 string& ltrim(std::string & str){
     auto it2 =  std::find_if( str.begin() , str.end() , [](char ch){ return !std::isspace<char>(ch , std::locale::classic() ) ; } );
     str.erase( str.begin() , it2);
     return str;
 }
-
 //HELPER- STRING GET RID OF RIGHT_HAND_SIDE SPACE
 string& rtrim(std::string & str){
     auto it1 =  std::find_if( str.rbegin() , str.rend() , [](char ch){ return !std::isspace<char>(ch , std::locale::classic() ) ; } );
