@@ -797,9 +797,13 @@ int logic(){
             }
             //sug here, record here[v]
             if(finaltf==1&&treeVec[ti].suggestion!="X"){
-                botSay(treeVec[ti].suggestion);
+                cout<<endl;
+                string sug="*****";
+                sug.append(treeVec[ti].suggestion);
+                botSay(sug);
                 if(record)
                     treeVec[ti].writelog();
+                cout<<endl<<endl<<endl;
                 return -1;
             }
             //cout<<" ";
@@ -984,6 +988,7 @@ int main(){
                 record=0;
             }else if(cmd=="quit"){
                 botSay("GoodBye!");
+                cout<<endl<<endl;
                 break;
             }else{
                 string a="CMD ERROR";
