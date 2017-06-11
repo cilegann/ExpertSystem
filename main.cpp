@@ -671,7 +671,7 @@ bool stateUpdateToTV(){
     return changed;
 }
 //HELP- updateSV state from fV
-bool updateSVIFfromFV(){
+bool updateSVIFfromFV(bool first){
     bool changed=0;
     for(int fi=0;fi<factVec.size();fi++){
         for(int si=0;si<statementVec.size();si++){
@@ -682,6 +682,7 @@ bool updateSVIFfromFV(){
                     }else{
                         statementVec[si].ifStateEqual=0;
                     }
+                    if(!first)
                     statementVec[si].Origscore=0;
                     statementVec[si].scoreRefresh();
                 }
@@ -699,7 +700,7 @@ void clearclause(){
     }
     for(int i=0;i<statementVec.size();i++){
         statementVec[i].ifStateEqual=-1;
-        statementVec[i].Origscore=0;
+        statementVec[i].Origscore=1;
         statementVec[i].scoreRefresh();
     }
     scoreUpdateToTV();
@@ -711,7 +712,7 @@ int logic(){
     //0:no change, 1:change, -1:prompt
     int changed=0;
     for(int ti=0;ti<treeVec.size();ti++){
-        if(treeVec[ti].resultStatement.score>=0){
+        if(treeVec[ti].resultStatement.score>0){
             stateUpdateToTV();
             vector<int> orlogic;
             int finaltf=-1;
@@ -844,8 +845,15 @@ bool promper(string specConclu){
         }
     }
 afterloop:
-    updateSVIFfromFV();
+    updateSVIFfromFV(0);
     int control=logic();
+    bool full=1;
+    for(int i=0;i<factVec.size();i++){
+        if(factVec[i].state!="?")
+            full=0;
+    }
+    if(full)
+        return 0;
     while(control==1){
         control=logic();
     }
@@ -890,8 +898,15 @@ bool promper(){
         }
     }
 afterloop:
-    updateSVIFfromFV();
+    updateSVIFfromFV(0);
     int control=logic();
+    bool full=1;
+    for(int i=0;i<factVec.size();i++){
+        if(factVec[i].state!="?")
+            full=0;
+    }
+    if(full)
+        return 0;
     while(control==1){
         control=logic();
     }
@@ -904,13 +919,13 @@ afterloop:
 //MAIN- INFERENCE[V]
 void inf(){
     readlog();
-    updateSVIFfromFV();
+    updateSVIFfromFV(1);
     sort(treeVec.begin(),treeVec.end());
     //自我判斷直到沒有改變（若結論已得到，score=0）[v]
     int logicChanged=logic();
     while(logicChanged==1)
         logicChanged=logic();
-    //tree排序
+    //若沒矛盾
     if(logicChanged!=-5){
         sort(treeVec.begin(),treeVec.end());
         //輪流prompt，每prompt一次就自我判斷一輪，再排序
@@ -919,7 +934,6 @@ void inf(){
             toprompt=promper();
         botSay("Inference end. Clear all fact clauses");
         clearclause();
-
     }
 }
 int main(){

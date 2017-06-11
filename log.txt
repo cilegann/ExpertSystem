@@ -1,1 +1,13 @@
 20170502 1030 penguin_1: The animal is a penguin.20170504 1230 penguin_1: The animal is a penguin.20170505 1240 penguin_1: The animal is a ostrich.20170506 1430 penguin_1: The animal is a penguin.
+20170611 1157 penguin_1:  The animal is a penguin 企鵝.
+20170611 1208 cheetah_1:  The animal is a cheetah 豹.
+20170611 1221 penguin_1:  The animal is a penguin 企鵝.
+20170611 1239 giraffe_1:  The animal is a giraffe 長頸鹿.
+20170502 1030 penguin_1: The animal is a penguin.20170504 1230 penguin_1: The animal is a penguin.20170505 1240 penguin_1: The animal is a ostrich.20170506 1430 penguin_1: The animal is a penguin.
+20170611 1157 penguin_1:  The animal is a penguin 企鵝.
+20170611 1208 cheetah_1:  The animal is a cheetah 豹.
+20170611 1221 penguin_1:  The animal is a penguin 企鵝.
+20170611 1402 cheetah_1:  The animal is a cheetah 豹.
+20170611 1403 tiger_1:  The animal is a tiger 虎.
+
+

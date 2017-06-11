@@ -1,0 +1,4 @@
+has_feathers=F
+can_fly=F
+lay_eggs=F
+is_bird=T
