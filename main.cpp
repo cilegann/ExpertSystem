@@ -18,7 +18,6 @@
 #include <time.h>
 #include <iomanip>
 using namespace std;
-
 //函數 全域變數 宣告[v]
 int countlines(char*);
 string readline(char*,int);
@@ -34,8 +33,6 @@ vector<tree> finalTV;
 vector<tree> ordinTV;
 vector<statement> statementVec;
 bool debug=0,record=0;
-string lastclause;
-
 //HELP- TIME[v]
 class nowtime{
 public:
@@ -197,6 +194,7 @@ public:
         log<<time.year<<setw(2)<<setfill('0')<<time.month<<setw(2)<<setfill('0')<<time.day;
         log<<" "<<setw(2)<<setfill('0')<<time.hour<<setw(2)<<setfill('0')<<time.min<<" ";
         log<<name<<"_1: "<<suggestion.substr(1,suggestion.length()-4)<<"\n";
+        log.close();
     }
     bool operator<(const tree &rhs) const {
         return resultStatement.score < rhs.resultStatement.score;
@@ -447,7 +445,6 @@ void addrule(){
             sug=todo.substr(sugStartIndex,sugEndIndex-sugStartIndex+1);
         else
             sug="X";
-        
         ruleName=trim(ruleName);
         conditionUncut=trim(conditionUncut);
         conclusionUncut=trim(conclusionUncut);
@@ -527,7 +524,6 @@ bool addclause(string in){
         botSay("ERROR(FORMAT ERROR)");
         return 0;
     }
-
     botSay(tosay);
     return chk;
 }
@@ -545,7 +541,6 @@ void openclause(string filepath){
     ts.append(": ");
     ts.append(to_string(count));
     ts.append(" clauses read\n");
-    lastclause=filepath;
 }
 //HELP- update score from every tree's resultstatement to statementVec(return 1 if at least one value is changed)
 bool scoreUpdateToSV(){
@@ -603,29 +598,32 @@ void readlog(){
     string filepath="./log.txt";
     char* filepathChar=&filepath[0u];
     double totalLine=countlines(filepathChar);
-    for(double line=0;line<totalLine;line++){
-        string str=readline(filepathChar, line);
-        int spindex=(int)str.find(' ');
-        spindex=(int)str.find(' ',spindex+1);
-        int endindex=(int)str.find('_');
-        string statename=str.substr(spindex,endindex-spindex);
-        statename=trim(statename);
-        for(int ti=0;ti<treeVec.size();ti++){
-            if(treeVec[ti].name==statename){
-                for(int stindex=0;stindex<statementVec.size();stindex++){
-                    if(statementVec[stindex]==treeVec[ti].resultStatement){
-                        statementVec[stindex].historyTimes++;
+    if(totalLine!=0){
+        for(double line=0;line<totalLine;line++){
+            string str=readline(filepathChar, line);
+            int spindex=(int)str.find(' ');
+            spindex=(int)str.find(' ',spindex+1);
+            int endindex=(int)str.find('_');
+            string statename=str.substr(spindex,endindex-spindex);
+            statename=trim(statename);
+            for(int ti=0;ti<treeVec.size();ti++){
+                if(treeVec[ti].name==statename){
+                    for(int stindex=0;stindex<statementVec.size();stindex++){
+                        if(statementVec[stindex]==treeVec[ti].resultStatement){
+                            statementVec[stindex].historyTimes++;
+                        }
                     }
                 }
             }
         }
-    }
-    for(int treeindex=0;treeindex<treeVec.size();treeindex++){
-        for(int stateindex=0;stateindex<statementVec.size();stateindex++){
-            if(treeVec[treeindex].resultStatement==statementVec[stateindex]){
-                treeVec[treeindex].resultStatement.historyTimes=statementVec[stateindex].historyTimes;
-                treeVec[treeindex].resultStatement.ratio=2-(double)(statementVec[stateindex].historyTimes/totalLine);
-                scoreUpdateToSV();
+        
+        for(int treeindex=0;treeindex<treeVec.size();treeindex++){
+            for(int stateindex=0;stateindex<statementVec.size();stateindex++){
+                if(treeVec[treeindex].resultStatement==statementVec[stateindex]){
+                    treeVec[treeindex].resultStatement.historyTimes=statementVec[stateindex].historyTimes;
+                    treeVec[treeindex].resultStatement.ratio=2-(double)(statementVec[stateindex].historyTimes/totalLine);
+                    scoreUpdateToSV();
+                }
             }
         }
     }
@@ -683,7 +681,7 @@ bool updateSVIFfromFV(bool first){
                         statementVec[si].ifStateEqual=0;
                     }
                     if(!first)
-                    statementVec[si].Origscore=0;
+                        statementVec[si].Origscore=0;
                     statementVec[si].scoreRefresh();
                 }
             }
@@ -701,6 +699,7 @@ void clearclause(){
     for(int i=0;i<statementVec.size();i++){
         statementVec[i].ifStateEqual=-1;
         statementVec[i].Origscore=1;
+        statementVec[i].ratio=2;
         statementVec[i].scoreRefresh();
     }
     scoreUpdateToTV();
@@ -746,7 +745,6 @@ int logic(){
                     finaltf=-1;
                 }
             }
-            
             if(treeVec[ti].resultStatement.ifStateEqual==-1){
                 if(treeVec[ti].resultStatement.ifStateEqual!=finaltf){
                     changed=1;
@@ -806,9 +804,15 @@ int logic(){
                 cout<<endl<<endl<<endl;
                 return -1;
             }
-            //cout<<" ";
         }
     }
+    bool full=1;
+    for(int i=0;i<factVec.size();i++){
+        if(factVec[i].state=="?")
+            full=0;
+    }
+    if(full)
+        return -5;
     stateUpdateToTV();
     return changed;
 }
@@ -853,7 +857,7 @@ afterloop:
     int control=logic();
     bool full=1;
     for(int i=0;i<factVec.size();i++){
-        if(factVec[i].state!="?")
+        if(factVec[i].state=="?")
             full=0;
     }
     if(full)
@@ -906,7 +910,7 @@ afterloop:
     int control=logic();
     bool full=1;
     for(int i=0;i<factVec.size();i++){
-        if(factVec[i].state!="?")
+        if(factVec[i].state=="?")
             full=0;
     }
     if(full)
@@ -941,7 +945,6 @@ void inf(){
     }
 }
 int main(){
-    //string rulepath="/Users/sean/Desktop/dp/A_rules.txt";
     string cmdU,cmd,arg="";
     int spaceIdx;
     cout<<"> ";
@@ -1017,6 +1020,7 @@ int countlines(char* file){
         filetoopen.close();
         return lines;
     }
+    filetoopen.close();
 }
 //HELPER- read line from file
 string readline(char* file,int target_line){
@@ -1028,6 +1032,7 @@ string readline(char* file,int target_line){
         i++;
     }
     return line;
+    filetoopen.close();
 }
 //HELPER- STRING GET RID OF SPACE
 string& trim(std::string & str){
