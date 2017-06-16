@@ -3,6 +3,7 @@
 此為以c++編寫之簡易專家系統
 會根據歷史以及現有事實調整詢問順序
 指令為
+
 0.  QUIT
 1.  OPENRULE [rule file path]讀入規則（格式參考A_rules.txt）
 2.  LISTRULE 系統列出整理過後之規則
